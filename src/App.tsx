@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { SearchBar } from '@/components/search/SearchBar'
 import { LocationRequest } from '@/components/search/LocationRequest'
 import { Dashboard } from '@/components/dashboard/Dashboard'
+import { ComparisonView } from '@/components/compare/ComparisonView'
 
 function App() {
   const [selectedCity, setSelectedCity] = useState<{ code: string, name: string } | null>(null);
@@ -52,6 +53,11 @@ function App() {
           <Dashboard cityCode={selectedCity.code} cityName={selectedCity.name} />
         </div>
       )}
+
+      <div className="w-full max-w-6xl mt-12">
+        <h2 className="text-2xl font-bold mb-4 text-center">Comparateur</h2>
+        <ComparisonView />
+      </div>
     </div>
   )
 }

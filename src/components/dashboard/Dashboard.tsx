@@ -6,6 +6,8 @@ import { Loader2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { FamilyToggle } from "@/components/family-mode/FamilyToggle";
+import { Button } from "@/components/ui/button";
+import { useComparisonStore } from "@/stores/useComparisonStore";
 
 interface DashboardProps {
     cityCode: string;
@@ -83,6 +85,15 @@ export function Dashboard({ cityCode, cityName }: DashboardProps) {
                     </p>
                 </div>
                 <FamilyToggle />
+                <Button
+                    variant="outline"
+                    onClick={() => {
+                        const { addCity } = useComparisonStore.getState();
+                        addCity(cityCode, cityName);
+                    }}
+                >
+                    Ajouter au comparateur
+                </Button>
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
