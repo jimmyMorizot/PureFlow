@@ -88,9 +88,10 @@ export function LocationRequest({ onLocationFound }: LocationRequestProps) {
             </Button>
 
             {error && (
-                <div className="text-destructive text-sm mt-2 text-center">
-                    {error}
-                </div>
+                <Alert variant="destructive" className="mt-2">
+                    <AlertTitle>Erreur</AlertTitle>
+                    <AlertDescription>{error}</AlertDescription>
+                </Alert>
             )}
         </div>
     );

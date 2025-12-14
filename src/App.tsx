@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { SearchBar } from '@/components/search/SearchBar'
 import { LocationRequest } from '@/components/search/LocationRequest'
+import { Dashboard } from '@/components/dashboard/Dashboard'
 
 function App() {
   const [selectedCity, setSelectedCity] = useState<{ code: string, name: string } | null>(null);
@@ -47,9 +48,8 @@ function App() {
       </div>
 
       {selectedCity && (
-        <div className="mt-8 p-4 border rounded-lg bg-card text-card-foreground shadow-sm">
-          <h2 className="text-xl font-semibold">Commune sélectionnée</h2>
-          <p className="text-lg">{selectedCity.name} ({selectedCity.code})</p>
+        <div className="w-full max-w-5xl mt-8">
+          <Dashboard cityCode={selectedCity.code} cityName={selectedCity.name} />
         </div>
       )}
     </div>

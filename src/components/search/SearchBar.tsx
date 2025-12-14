@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, MapPin } from "lucide-react";
+import { Search, MapPin, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
 interface City {
@@ -58,7 +58,11 @@ export function SearchBar({ onSelectCity, onGeolocate }: SearchBarProps) {
                         onChange={(e) => setQuery(e.target.value)}
                         className="pr-10"
                     />
-                    <Search className="absolute right-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                    {isLoading ? (
+                        <Loader2 className="absolute right-3 top-2.5 h-5 w-5 animate-spin text-muted-foreground" />
+                    ) : (
+                        <Search className="absolute right-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                    )}
                 </div>
                 <Button variant="outline" size="icon" onClick={onGeolocate} title="Me géolocaliser">
                     <MapPin className="h-5 w-5" />
