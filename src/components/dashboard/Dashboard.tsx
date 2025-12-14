@@ -9,6 +9,9 @@ import { FamilyToggle } from "@/components/family-mode/FamilyToggle";
 import { Button } from "@/components/ui/button";
 import { useComparisonStore } from "@/stores/useComparisonStore";
 
+import { AlertSettings } from "@/components/alerts/AlertSettings";
+import { useAlertStore } from "@/stores/useAlertStore";
+
 interface DashboardProps {
     cityCode: string;
     cityName: string;
@@ -18,6 +21,17 @@ export function Dashboard({ cityCode, cityName }: DashboardProps) {
     const [data, setData] = useState<WaterQualityResult | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const { alerts } = useAlertStore();
+
+    // ... (existing useEffect) ...
+
+    // Check for alerts
+    const activeAlerts = data ? alerts.filter(alert => {
+        if (!alert.enabled) return false;
+        const param = data.resultats_analyse.find(p => p.code_parametre === alert.parameterCode);
+        if (!param) return false;
+        return param.resultat_numerique > alert.threshold;
+    }) : [];
 
     useEffect(() => {
         const loadData = async () => {
@@ -77,6 +91,20 @@ export function Dashboard({ cityCode, cityName }: DashboardProps) {
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
+            {activeAlerts.length > 0 && (
+                <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Alerte Qualité</AlertTitle>
+                    <AlertDescription>
+                        {activeAlerts.map(a => (
+                            <div key={a.parameterCode}>
+                                Le niveau de {a.parameterName} dépasse le seuil configuré ({a.threshold}).
+                            </div>
+                        ))}
+                    </AlertDescription>
+                </Alert>
+            )}
+
             <div className="flex flex-col items-center justify-center space-y-4">
                 <div className="text-center space-y-2">
                     <h2 className="text-3xl font-bold tracking-tight">{cityName}</h2>
@@ -84,16 +112,19 @@ export function Dashboard({ cityCode, cityName }: DashboardProps) {
                         Prélèvement du {new Date(data.date_prelevement).toLocaleDateString("fr-FR")}
                     </p>
                 </div>
-                <FamilyToggle />
-                <Button
-                    variant="outline"
-                    onClick={() => {
-                        const { addCity } = useComparisonStore.getState();
-                        addCity(cityCode, cityName);
-                    }}
-                >
-                    Ajouter au comparateur
-                </Button>
+                <div className="flex gap-2">
+                    <FamilyToggle />
+                    <AlertSettings />
+                    <Button
+                        variant="outline"
+                        onClick={() => {
+                            const { addCity } = useComparisonStore.getState();
+                            addCity(cityCode, cityName);
+                        }}
+                    >
+                        Ajouter au comparateur
+                    </Button>
+                </div>
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
