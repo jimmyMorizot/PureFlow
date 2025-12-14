@@ -11,6 +11,8 @@ import { useComparisonStore } from "@/stores/useComparisonStore";
 
 import { AlertSettings } from "@/components/alerts/AlertSettings";
 import { useAlertStore } from "@/stores/useAlertStore";
+import { exportToPDF } from "@/lib/export";
+import { FileDown } from "lucide-react";
 
 interface DashboardProps {
     cityCode: string;
@@ -90,7 +92,7 @@ export function Dashboard({ cityCode, cityName }: DashboardProps) {
     ).slice(0, 6); // Show a few others
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500">
+        <div className="space-y-8 animate-in fade-in duration-500" id="dashboard-content">
             {activeAlerts.length > 0 && (
                 <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
@@ -112,7 +114,7 @@ export function Dashboard({ cityCode, cityName }: DashboardProps) {
                         Prélèvement du {new Date(data.date_prelevement).toLocaleDateString("fr-FR")}
                     </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap justify-center">
                     <FamilyToggle />
                     <AlertSettings />
                     <Button
@@ -123,6 +125,14 @@ export function Dashboard({ cityCode, cityName }: DashboardProps) {
                         }}
                     >
                         Ajouter au comparateur
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        title="Exporter en PDF"
+                        onClick={() => exportToPDF("dashboard-content", `pureflow-${cityName}`)}
+                    >
+                        <FileDown className="h-4 w-4" />
                     </Button>
                 </div>
             </div>
