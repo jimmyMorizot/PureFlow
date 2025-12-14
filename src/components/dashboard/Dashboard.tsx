@@ -5,6 +5,7 @@ import { ParameterCard } from "./ParameterCard";
 import { Loader2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
+import { FamilyToggle } from "@/components/family-mode/FamilyToggle";
 
 interface DashboardProps {
     cityCode: string;
@@ -74,11 +75,14 @@ export function Dashboard({ cityCode, cityName }: DashboardProps) {
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
-            <div className="text-center space-y-2">
-                <h2 className="text-3xl font-bold tracking-tight">{cityName}</h2>
-                <p className="text-muted-foreground">
-                    Prélèvement du {new Date(data.date_prelevement).toLocaleDateString("fr-FR")}
-                </p>
+            <div className="flex flex-col items-center justify-center space-y-4">
+                <div className="text-center space-y-2">
+                    <h2 className="text-3xl font-bold tracking-tight">{cityName}</h2>
+                    <p className="text-muted-foreground">
+                        Prélèvement du {new Date(data.date_prelevement).toLocaleDateString("fr-FR")}
+                    </p>
+                </div>
+                <FamilyToggle />
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
