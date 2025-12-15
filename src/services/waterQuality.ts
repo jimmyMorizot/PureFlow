@@ -34,8 +34,16 @@ export interface WaterQualityResult {
         libelle_unite: string;
     }[];
     network?: WaterNetwork;
+    history?: {
+        [code_parametre: string]: {
+            date: string;
+            value: number;
+            conclusion: string;
+        }[]
+    };
 }
 
+// ... (existing code for getCommuneNetworks and getWaterResults) ...
 /**
  * Step 1: Get water distribution networks (UDI) for a commune
  * This is FAST and RELIABLE
@@ -203,6 +211,28 @@ export const fetchWaterQuality = async (cityCode: string): Promise<WaterQualityR
         const latestResults = results.filter(r => r.date_prelevement === latestDate);
         console.log(`[PureFlow] Found ${latestResults.length} parameters from latest sample`);
 
+        // Build history for important parameters (limit to last 10 samples)
+        // Important codes: 1340 (Nitrates), 1302 (pH), 1310 (Chlorine), etc.
+        const historyCodes = ["1340", "1302", "1310"];
+        const history: Record<string, any[]> = {};
+
+        historyCodes.forEach(code => {
+            const paramHistory = results
+                .filter(r => r.code_parametre === code)
+                .map(r => ({
+                    date: r.date_prelevement,
+                    value: r.resultat_numerique,
+                    conclusion: r.conclusion_conformite_prelevement
+                }))
+                // Deduplicate by date (take first sample of the day)
+                .filter((v, i, a) => a.findIndex(t => t.date === v.date) === i)
+                .slice(0, 20); // Last 20 samples
+
+            if (paramHistory.length > 0) {
+                history[code] = paramHistory;
+            }
+        });
+
         // Build the result object
         const first = latestResults[0];
 
@@ -219,7 +249,8 @@ export const fetchWaterQuality = async (cityCode: string): Promise<WaterQualityR
                 resultat_numerique: r.resultat_numerique,
                 libelle_unite: r.libelle_unite
             })),
-            network: selectedNetwork
+            network: selectedNetwork,
+            history
         };
 
     } catch (error) {

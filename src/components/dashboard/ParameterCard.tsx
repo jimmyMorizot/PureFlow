@@ -1,63 +1,92 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { Droplets, FlaskConical, Activity } from "lucide-react";
-import { useFamilyStore } from "@/stores/useFamilyStore";
+import { Droplets, FlaskConical, Activity, ShieldCheck, TrendingUp, TrendingDown } from "lucide-react";
+import { Sparkline } from "./Sparkline";
 
 interface ParameterCardProps {
     name: string;
     value: number;
     unit: string;
     code: string;
-    threshold?: number; // Optional threshold for warning
+    threshold?: number;
+    history?: { date: string; value: number }[];
+    color?: string;
 }
 
-export function ParameterCard({ name, value, unit, code, threshold }: ParameterCardProps) {
-    const { isFamilyMode } = useFamilyStore();
-
-    // Determine icon based on parameter code or name (simplified logic)
+export function ParameterCard({ name, value, unit, code, threshold, history, color = "#3b82f6" }: ParameterCardProps) {
+    // Determine icon based on parameter code or name
     let Icon = Activity;
     if (name.toLowerCase().includes("nitrate") || code === "1340") Icon = FlaskConical;
     if (name.toLowerCase().includes("ph") || code === "1302") Icon = Droplets;
+    if (name.toLowerCase().includes("chlor") || code === "1310") Icon = ShieldCheck;
 
-    // Determine status color
+    // Determine status
     const isWarning = threshold && value > threshold;
-    const statusColor = isWarning ? "text-red-500" : "text-primary";
+    const statusColor = isWarning ? "text-destructive" : "text-primary";
 
-    // Family mode simplified explanation
-    const getFamilyExplanation = () => {
-        if (code === "1340") return isWarning ? "Attention, il y a trop de nitrates !" : "C'est bon, pas trop de nitrates.";
-        if (code === "1302") return "Le pH indique si l'eau est acide ou basique.";
-        if (code === "1310") return "Le chlore sert à tuer les microbes.";
-        return "Un paramètre de l'eau.";
-    };
+    // Calculate trend from history
+    let TrendIcon = null;
+    let trendText = "";
+    if (history && history.length >= 2) {
+        const recent = history[0].value;
+        const previous = history[1].value;
+        if (recent > previous) {
+            TrendIcon = TrendingUp;
+            trendText = "En hausse";
+        } else if (recent < previous) {
+            TrendIcon = TrendingDown;
+            trendText = "En baisse";
+        }
+    }
+
+    // Transform history for sparkline
+    const sparklineData = history?.map(h => ({ value: h.value })).reverse() || [];
 
     return (
-        <Card className={cn("transition-all duration-300", isFamilyMode && "border-2", isFamilyMode && (isWarning ? "border-red-400 bg-red-50" : "border-green-400 bg-green-50"))}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium line-clamp-1" title={name}>
-                    {isFamilyMode ? (
-                        <span className="text-lg">
-                            {code === "1340" ? "Nitrates" : code === "1302" ? "pH" : name}
-                        </span>
-                    ) : name}
-                </CardTitle>
-                <Icon className={cn("h-4 w-4 text-muted-foreground", statusColor, isFamilyMode && "h-6 w-6")} />
-            </CardHeader>
-            <CardContent>
-                <div className="text-2xl font-bold">
-                    {value} <span className="text-sm font-normal text-muted-foreground">{unit}</span>
+        <Card className={cn(
+            "hover:shadow-lg transition-all duration-300 overflow-hidden group",
+            isWarning && "border-destructive/50"
+        )}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-5 pt-4">
+                <div className="flex items-center gap-2">
+                    <div className={cn("p-2 rounded-lg bg-primary/10", isWarning && "bg-destructive/10")}>
+                        <Icon className={cn("h-4 w-4", statusColor)} />
+                    </div>
+                    <CardTitle className="text-sm font-semibold text-foreground" title={name}>
+                        {name}
+                    </CardTitle>
                 </div>
-                {threshold && !isFamilyMode && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                        Seuil: {threshold} {unit}
-                    </p>
+                {TrendIcon && (
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <TrendIcon className="h-3 w-3" />
+                        <span className="hidden sm:inline">{trendText}</span>
+                    </div>
                 )}
-                {isFamilyMode && (
-                    <p className="text-sm font-medium mt-2 text-foreground/80">
-                        {getFamilyExplanation()}
-                    </p>
-                )}
+            </CardHeader>
+            <CardContent className="px-5 pb-4">
+                <div className="flex items-end justify-between gap-4">
+                    {/* Value */}
+                    <div>
+                        <div className="text-3xl font-bold tracking-tight text-foreground">
+                            {value}
+                            <span className="text-sm font-normal text-muted-foreground ml-1">{unit}</span>
+                        </div>
+                        {threshold && (
+                            <p className={cn("text-xs mt-1", isWarning ? "text-destructive" : "text-muted-foreground")}>
+                                {isWarning ? `Dépasse le seuil (${threshold})` : `Seuil: ${threshold}`}
+                            </p>
+                        )}
+                    </div>
+
+                    {/* Sparkline */}
+                    {sparklineData.length >= 2 && (
+                        <div className="w-24 h-10 opacity-80 group-hover:opacity-100 transition-opacity">
+                            <Sparkline data={sparklineData} color={isWarning ? "#ef4444" : color} />
+                        </div>
+                    )}
+                </div>
             </CardContent>
         </Card>
     );
 }
+

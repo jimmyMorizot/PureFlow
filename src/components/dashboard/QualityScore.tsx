@@ -1,63 +1,60 @@
 import { cn } from "@/lib/utils";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { CheckCircle, AlertTriangle } from "lucide-react";
+import { CheckCircle, AlertTriangle, ShieldCheck, FlaskConical } from "lucide-react";
 
 interface QualityScoreProps {
     conclusion: string;
     bacterio: string;
     chimique: string;
+    date?: string;
 }
 
-export function QualityScore({ conclusion = "Non disponible", bacterio = "Non disponible", chimique = "Non disponible" }: QualityScoreProps) {
+export function QualityScore({ conclusion = "Non disponible", bacterio = "Non disponible", chimique = "Non disponible", date }: QualityScoreProps) {
     const isConforme = conclusion?.toLowerCase().includes("conforme") && !conclusion?.toLowerCase().includes("non conforme");
+    const isBacterioOk = bacterio?.toLowerCase().includes("conforme") && !bacterio?.toLowerCase().includes("non");
+    const isChimiqueOk = chimique?.toLowerCase().includes("conforme") && !chimique?.toLowerCase().includes("non");
 
-    // Simple logic to determine score/color based on conformity
-    // In a real app, this might be more complex based on specific parameters
-    const colorClass = isConforme ? "text-green-600" : "text-red-600";
-    const bgColorClass = isConforme ? "bg-green-100" : "bg-red-100";
     const Icon = isConforme ? CheckCircle : AlertTriangle;
+    const gradientClass = isConforme
+        ? "from-emerald-500 to-teal-600"
+        : "from-red-500 to-orange-600";
 
     return (
-        <div className="w-full p-6 bg-card rounded-xl shadow-sm border space-y-6">
-            <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Qualité globale</h3>
-                <Badge variant={isConforme ? "default" : "destructive"} className="text-sm px-3 py-1">
-                    {isConforme ? "Excellente" : "Médiocre"}
-                </Badge>
-            </div>
-
-            <div className="flex flex-col items-center justify-center space-y-4 py-4">
-                <div className={cn("p-4 rounded-full", bgColorClass)}>
-                    <Icon className={cn("w-12 h-12", colorClass)} />
+        <div className={cn("w-full p-6 sm:p-8 rounded-2xl shadow-lg text-white bg-gradient-to-r", gradientClass)}>
+            <div className="flex flex-col md:flex-row md:items-center gap-6">
+                {/* Icon */}
+                <div className="p-4 bg-white/20 rounded-full shrink-0 self-start md:self-center">
+                    <Icon className="w-10 h-10 sm:w-12 sm:h-12" />
                 </div>
-                <div className="text-center space-y-1">
-                    <p className="text-2xl font-bold">{conclusion}</p>
-                    <p className="text-sm text-muted-foreground">Dernier prélèvement analysé</p>
-                </div>
-            </div>
 
-            <div className="space-y-4">
-                <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                        <span>Conformité bactériologique</span>
-                        <span className={bacterio.includes("Conforme") ? "text-green-600" : "text-red-600"}>
-                            {bacterio}
-                        </span>
+                {/* Text Content */}
+                <div className="flex-grow space-y-2">
+                    {date && (
+                        <p className="text-sm font-medium opacity-80 flex items-center gap-2">
+                            <span className="inline-block w-2 h-2 bg-white rounded-full"></span>
+                            {date}
+                        </p>
+                    )}
+                    <h2 className="text-2xl sm:text-3xl font-bold leading-tight">
+                        {isConforme ? "Eau potable conforme" : "Eau non conforme"}
+                    </h2>
+                    <p className="text-sm sm:text-base opacity-90 leading-relaxed max-w-2xl">
+                        {conclusion}
+                    </p>
+                    {/* Conformity Badges */}
+                    <div className="flex flex-wrap gap-3 pt-2">
+                        <div className={cn("flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium", isBacterioOk ? "bg-white/20" : "bg-red-500/50")}>
+                            <ShieldCheck className="w-4 h-4" />
+                            Bactério: {isBacterioOk ? "OK" : "Non conforme"}
+                        </div>
+                        <div className={cn("flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium", isChimiqueOk ? "bg-white/20" : "bg-red-500/50")}>
+                            <FlaskConical className="w-4 h-4" />
+                            Physico-chimique: {isChimiqueOk ? "OK" : "Non conforme"}
+                        </div>
                     </div>
-                    <Progress value={bacterio.includes("Conforme") ? 100 : 30} className="h-2" />
-                </div>
-
-                <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                        <span>Conformité physico-chimique</span>
-                        <span className={chimique.includes("Conforme") ? "text-green-600" : "text-red-600"}>
-                            {chimique}
-                        </span>
-                    </div>
-                    <Progress value={chimique.includes("Conforme") ? 100 : 30} className="h-2" />
                 </div>
             </div>
         </div>
     );
 }
+
+
