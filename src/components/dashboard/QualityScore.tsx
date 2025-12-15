@@ -9,8 +9,8 @@ interface QualityScoreProps {
     chimique: string;
 }
 
-export function QualityScore({ conclusion, bacterio, chimique }: QualityScoreProps) {
-    const isConforme = conclusion.toLowerCase().includes("conforme") && !conclusion.toLowerCase().includes("non conforme");
+export function QualityScore({ conclusion = "Non disponible", bacterio = "Non disponible", chimique = "Non disponible" }: QualityScoreProps) {
+    const isConforme = conclusion?.toLowerCase().includes("conforme") && !conclusion?.toLowerCase().includes("non conforme");
 
     // Simple logic to determine score/color based on conformity
     // In a real app, this might be more complex based on specific parameters

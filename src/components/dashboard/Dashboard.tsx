@@ -13,6 +13,7 @@ import { AlertSettings } from "@/components/alerts/AlertSettings";
 import { useAlertStore } from "@/stores/useAlertStore";
 import { exportToPDF } from "@/lib/export";
 import { FileDown } from "lucide-react";
+import { WaterQualityChart } from "./WaterQualityChart";
 
 interface DashboardProps {
     cityCode: string;
@@ -77,7 +78,16 @@ export function Dashboard({ cityCode, cityName }: DashboardProps) {
         );
     }
 
-    if (!data) return null;
+    console.log("Dashboard render:", { isLoading, error, data, cityCode });
+
+    if (!data) {
+        return (
+            <div className="text-center py-12">
+                <p className="text-muted-foreground">Aucune donnée à afficher.</p>
+                <p className="text-xs text-muted-foreground mt-2">Code commune: {cityCode}</p>
+            </div>
+        );
+    }
 
     // Filter important parameters to display prominently
     // Common parameters: Nitrates (1340), pH (1302), Chlorine, etc.
@@ -147,43 +157,55 @@ export function Dashboard({ cityCode, cityName }: DashboardProps) {
                 </div>
 
                 <div className="md:col-span-2 lg:col-span-2 space-y-6">
-                    <div>
-                        <h3 className="text-xl font-semibold mb-4">Paramètres clés</h3>
-                        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                            {importantParams.map((param, idx) => (
-                                <ParameterCard
-                                    key={`${param.code_parametre}-${idx}`}
-                                    name={param.libelle_parametre}
-                                    value={param.resultat_numerique}
-                                    unit={param.libelle_unite}
-                                    code={param.code_parametre}
-                                    threshold={param.code_parametre === "1340" ? 50 : undefined} // Example threshold for Nitrates
-                                />
-                            ))}
-                            {importantParams.length === 0 && (
-                                <p className="text-muted-foreground col-span-full">Aucun paramètre clé détecté.</p>
-                            )}
-                        </div>
+                    <h3 className="text-xl font-semibold mb-4">Paramètres clés</h3>
+                    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mb-6">
+                        {importantParams.map((param, idx) => (
+                            <ParameterCard
+                                key={`${param.code_parametre}-${idx}`}
+                                name={param.libelle_parametre}
+                                value={param.resultat_numerique}
+                                unit={param.libelle_unite}
+                                code={param.code_parametre}
+                                threshold={param.code_parametre === "1340" ? 50 : undefined} // Example threshold for Nitrates
+                            />
+                        ))}
+                        {importantParams.length === 0 && (
+                            <p className="text-muted-foreground col-span-full">Aucun paramètre clé détecté.</p>
+                        )}
                     </div>
 
-                    <Separator />
-
-                    <div>
-                        <h3 className="text-xl font-semibold mb-4">Autres analyses</h3>
-                        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                            {otherParams.map((param, idx) => (
-                                <ParameterCard
-                                    key={`${param.code_parametre}-${idx}`}
-                                    name={param.libelle_parametre}
-                                    value={param.resultat_numerique}
-                                    unit={param.libelle_unite}
-                                    code={param.code_parametre}
-                                />
-                            ))}
+                    {importantParams.length > 0 && (
+                        <div className="mb-6">
+                            <WaterQualityChart
+                                data={importantParams.map(p => ({
+                                    parameter: p.libelle_parametre,
+                                    value: p.resultat_numerique,
+                                    unit: p.libelle_unite,
+                                    threshold: p.code_parametre === "1340" ? 50 : undefined
+                                }))}
+                            />
                         </div>
+                    )}
+                </div>
+
+                <Separator />
+
+                <div>
+                    <h3 className="text-xl font-semibold mb-4">Autres analyses</h3>
+                    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                        {otherParams.map((param, idx) => (
+                            <ParameterCard
+                                key={`${param.code_parametre}-${idx}`}
+                                name={param.libelle_parametre}
+                                value={param.resultat_numerique}
+                                unit={param.libelle_unite}
+                                code={param.code_parametre}
+                            />
+                        ))}
                     </div>
                 </div>
             </div>
         </div>
+
     );
 }

@@ -48,21 +48,23 @@ export function LocationRequest({ onLocationFound }: LocationRequestProps) {
                 }
             },
             (err) => {
-                console.error(err);
-                switch (err.code) {
-                    case err.PERMISSION_DENIED:
-                        setError("Vous avez refusé la géolocalisation.");
-                        break;
-                    case err.POSITION_UNAVAILABLE:
-                        setError("La position est indisponible.");
-                        break;
-                    case err.TIMEOUT:
-                        setError("La demande de géolocalisation a expiré.");
-                        break;
-                    default:
-                        setError("Une erreur inconnue est survenue.");
+                console.error("Geolocation error:", err);
+                // Use numeric codes for safety
+                if (err.code === 1) { // PERMISSION_DENIED
+                    setError("Vous avez refusé la géolocalisation.");
+                } else if (err.code === 2) { // POSITION_UNAVAILABLE
+                    setError("La position est indisponible.");
+                } else if (err.code === 3) { // TIMEOUT
+                    setError("La demande de géolocalisation a expiré.");
+                } else {
+                    setError(`Une erreur est survenue: ${err.message}`);
                 }
                 setIsLoading(false);
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
             }
         );
     };
