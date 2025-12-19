@@ -88,7 +88,7 @@ function App() {
       {/* Search Section */}
       <div
         ref={searchRef}
-        className={`w-full max-w-3xl space-y-10 animate-in slide-in-from-bottom-8 duration-1000 ${isLandingPage ? 'scale-100 z-10 px-4' : 'pt-12 max-w-md'}`}
+        className={`w-full max-w-3xl space-y-10 animate-in slide-in-from-bottom-8 duration-1000 ${isLandingPage ? 'scale-100 z-10 px-4 pt-20 sm:pt-12 md:pt-0' : 'pt-12 max-w-md'}`}
       >
         <div className="text-center space-y-8 mb-8">
 
