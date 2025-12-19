@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Droplets, FlaskConical, Activity, ShieldCheck, TrendingUp, TrendingDown } from "lucide-react";
+import { memo, useMemo } from "react";
 import { Sparkline } from "./Sparkline";
 
 interface ParameterCardProps {
@@ -13,34 +14,42 @@ interface ParameterCardProps {
     color?: string;
 }
 
-export function ParameterCard({ name, value, unit, code, threshold, history, color = "#3b82f6" }: ParameterCardProps) {
+function ParameterCardComponent({ name, value, unit, code, threshold, history, color = "#3b82f6" }: ParameterCardProps) {
     // Determine icon based on parameter code or name
-    let Icon = Activity;
-    if (name.toLowerCase().includes("nitrate") || code === "1340") Icon = FlaskConical;
-    if (name.toLowerCase().includes("ph") || code === "1302") Icon = Droplets;
-    if (name.toLowerCase().includes("chlor") || code === "1310") Icon = ShieldCheck;
+    const Icon = useMemo(() => {
+        if (name.toLowerCase().includes("nitrate") || code === "1340") return FlaskConical;
+        if (name.toLowerCase().includes("ph") || code === "1302") return Droplets;
+        if (name.toLowerCase().includes("chlor") || code === "1310") return ShieldCheck;
+        return Activity;
+    }, [name, code]);
 
-    // Determine status
-    const isWarning = threshold && value > threshold;
-    const statusColor = isWarning ? "text-destructive" : "text-primary";
+    // Determine status and calculate trend
+    const { isWarning, statusColor, TrendIcon, trendText } = useMemo(() => {
+        const warning = threshold && value > threshold;
+        const color = warning ? "text-destructive" : "text-primary";
 
-    // Calculate trend from history
-    let TrendIcon = null;
-    let trendText = "";
-    if (history && history.length >= 2) {
-        const recent = history[0].value;
-        const previous = history[1].value;
-        if (recent > previous) {
-            TrendIcon = TrendingUp;
-            trendText = "En hausse";
-        } else if (recent < previous) {
-            TrendIcon = TrendingDown;
-            trendText = "En baisse";
+        let trendIcon = null;
+        let text = "";
+        if (history && history.length >= 2) {
+            const recent = history[0].value;
+            const previous = history[1].value;
+            if (recent > previous) {
+                trendIcon = TrendingUp;
+                text = "En hausse";
+            } else if (recent < previous) {
+                trendIcon = TrendingDown;
+                text = "En baisse";
+            }
         }
-    }
+
+        return { isWarning: warning, statusColor: color, TrendIcon: trendIcon, trendText: text };
+    }, [threshold, value, history]);
 
     // Transform history for sparkline
-    const sparklineData = history?.map(h => ({ value: h.value })).reverse() || [];
+    const sparklineData = useMemo(
+        () => history?.map(h => ({ value: h.value })).reverse() || [],
+        [history]
+    );
 
     return (
         <Card className={cn(
@@ -89,4 +98,6 @@ export function ParameterCard({ name, value, unit, code, threshold, history, col
         </Card>
     );
 }
+
+export const ParameterCard = memo(ParameterCardComponent);
 

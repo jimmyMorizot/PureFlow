@@ -2,6 +2,7 @@
 // Strategy based on YoanDev's pureflow: Use communes_udi to get code_reseau, then fetch resultats_dis by code_reseau
 
 const HUBEAU_BASE_URL = 'https://hubeau.eaufrance.fr/api/v1/qualite_eau_potable';
+const DEBUG = import.meta.env.DEV;
 
 export interface WaterNetwork {
     code_reseau: string;
@@ -20,6 +21,18 @@ export interface WaterResult {
     conformite_limites_p_c_prelevement?: string;
 }
 
+interface CommuneUdiItem {
+    code_reseau: string;
+    nom_reseau: string;
+    nom_distributeur?: string;
+}
+
+interface HistoryRecord {
+    date: string;
+    value: number;
+    conclusion: string;
+}
+
 export interface WaterQualityResult {
     code_commune: string;
     nom_commune: string;
@@ -34,13 +47,7 @@ export interface WaterQualityResult {
         libelle_unite: string;
     }[];
     network?: WaterNetwork;
-    history?: {
-        [code_parametre: string]: {
-            date: string;
-            value: number;
-            conclusion: string;
-        }[]
-    };
+    history?: Record<string, HistoryRecord[]>;
 }
 
 // ... (existing code for getCommuneNetworks and getWaterResults) ...
@@ -49,7 +56,7 @@ export interface WaterQualityResult {
  * This is FAST and RELIABLE
  */
 export const getCommuneNetworks = async (codeCommune: string, retries = 3): Promise<WaterNetwork[]> => {
-    console.log(`[PureFlow] Step 1: Fetching networks for commune ${codeCommune}...`);
+    if (DEBUG) console.log(`[PureFlow] Step 1: Fetching networks for commune ${codeCommune}...`);
 
     const fetchWithRetry = async (attempt: number): Promise<Response | null> => {
         try {
@@ -58,22 +65,22 @@ export const getCommuneNetworks = async (codeCommune: string, retries = 3): Prom
             if (!response.ok) {
                 if (attempt < retries && [500, 502, 503, 504].includes(response.status)) {
                     const delay = 1000 * Math.pow(2, attempt);
-                    console.warn(`[PureFlow] communes_udi error ${response.status}, retry ${attempt + 1}/${retries} in ${delay}ms...`);
+                    if (DEBUG) console.warn(`[PureFlow] communes_udi error ${response.status}, retry ${attempt + 1}/${retries} in ${delay}ms...`);
                     await new Promise(resolve => setTimeout(resolve, delay));
                     return fetchWithRetry(attempt + 1);
                 }
-                console.warn(`[PureFlow] communes_udi failed: ${response.status}`);
+                if (DEBUG) console.warn(`[PureFlow] communes_udi failed: ${response.status}`);
                 return null;
             }
             return response;
         } catch (error) {
             if (attempt < retries) {
                 const delay = 1000 * Math.pow(2, attempt);
-                console.warn(`[PureFlow] communes_udi network error, retry ${attempt + 1}/${retries} in ${delay}ms...`);
+                if (DEBUG) console.warn(`[PureFlow] communes_udi network error, retry ${attempt + 1}/${retries} in ${delay}ms...`);
                 await new Promise(resolve => setTimeout(resolve, delay));
                 return fetchWithRetry(attempt + 1);
             }
-            console.error('[PureFlow] communes_udi failed after retries:', error);
+            if (DEBUG) console.error('[PureFlow] communes_udi failed after retries:', error);
             return null;
         }
     };
@@ -83,16 +90,16 @@ export const getCommuneNetworks = async (codeCommune: string, retries = 3): Prom
         if (!response) return [];
 
         const data = await response.json();
-        console.log(`[PureFlow] communes_udi response:`, data);
+        if (DEBUG) console.log(`[PureFlow] communes_udi response:`, data);
 
         if (!data.data || data.data.length === 0) {
-            console.warn(`[PureFlow] No networks found for commune ${codeCommune}`);
+            if (DEBUG) console.warn(`[PureFlow] No networks found for commune ${codeCommune}`);
             return [];
         }
 
         // Extract unique networks
         const uniqueNetworks = new Map<string, WaterNetwork>();
-        data.data.forEach((item: any) => {
+        data.data.forEach((item: CommuneUdiItem) => {
             if (item.code_reseau && !uniqueNetworks.has(item.code_reseau)) {
                 uniqueNetworks.set(item.code_reseau, {
                     code_reseau: item.code_reseau,
@@ -103,11 +110,11 @@ export const getCommuneNetworks = async (codeCommune: string, retries = 3): Prom
         });
 
         const networks = Array.from(uniqueNetworks.values());
-        console.log(`[PureFlow] Found ${networks.length} unique networks:`, networks);
+        if (DEBUG) console.log(`[PureFlow] Found ${networks.length} unique networks:`, networks);
         return networks;
 
     } catch (error) {
-        console.error('[PureFlow] Error fetching networks:', error);
+        if (DEBUG) console.error('[PureFlow] Error fetching networks:', error);
         return [];
     }
 };
@@ -121,10 +128,10 @@ export const getWaterResults = async (codeCommune: string, codeReseau?: string, 
 
     if (codeReseau) {
         url += `&code_reseau=${codeReseau}`;
-        console.log(`[PureFlow] Step 2: Fetching results by code_reseau=${codeReseau}...`);
+        if (DEBUG) console.log(`[PureFlow] Step 2: Fetching results by code_reseau=${codeReseau}...`);
     } else {
         url += `&code_commune=${codeCommune}`;
-        console.log(`[PureFlow] Step 2: Fallback - fetching results by code_commune=${codeCommune}...`);
+        if (DEBUG) console.log(`[PureFlow] Step 2: Fallback - fetching results by code_commune=${codeCommune}...`);
     }
 
     const fetchWithRetry = async (attempt: number): Promise<Response> => {
@@ -134,11 +141,11 @@ export const getWaterResults = async (codeCommune: string, codeReseau?: string, 
             if (!response.ok) {
                 if (attempt < retries && [500, 502, 503, 504].includes(response.status)) {
                     const delay = 1000 * Math.pow(2, attempt);
-                    console.warn(`[PureFlow] resultats_dis error ${response.status}, retry ${attempt + 1}/${retries} in ${delay}ms...`);
+                    if (DEBUG) console.warn(`[PureFlow] resultats_dis error ${response.status}, retry ${attempt + 1}/${retries} in ${delay}ms...`);
                     await new Promise(resolve => setTimeout(resolve, delay));
                     return fetchWithRetry(attempt + 1);
                 }
-                console.error(`[PureFlow] resultats_dis failed: ${response.status}`);
+                if (DEBUG) console.error(`[PureFlow] resultats_dis failed: ${response.status}`);
                 if (response.status === 404) throw new Error('NOT_FOUND');
                 throw new Error(`Hub'Eau API Error: ${response.status}`);
             }
@@ -147,7 +154,7 @@ export const getWaterResults = async (codeCommune: string, codeReseau?: string, 
             if (error instanceof Error && error.message === 'NOT_FOUND') throw error;
             if (attempt < retries) {
                 const delay = 1000 * Math.pow(2, attempt);
-                console.warn(`[PureFlow] resultats_dis network error, retry ${attempt + 1}/${retries} in ${delay}ms...`);
+                if (DEBUG) console.warn(`[PureFlow] resultats_dis network error, retry ${attempt + 1}/${retries} in ${delay}ms...`);
                 await new Promise(resolve => setTimeout(resolve, delay));
                 return fetchWithRetry(attempt + 1);
             }
@@ -158,12 +165,12 @@ export const getWaterResults = async (codeCommune: string, codeReseau?: string, 
     try {
         const response = await fetchWithRetry(0);
         const data = await response.json();
-        console.log(`[PureFlow] resultats_dis returned ${data.data?.length || 0} results`);
+        if (DEBUG) console.log(`[PureFlow] resultats_dis returned ${data.data?.length || 0} results`);
         return data.data || [];
 
     } catch (error) {
         if (error instanceof Error && error.message === 'NOT_FOUND') return [];
-        console.error('[PureFlow] Error fetching water results:', error);
+        if (DEBUG) console.error('[PureFlow] Error fetching water results:', error);
         throw error;
     }
 };
@@ -173,7 +180,7 @@ export const getWaterResults = async (codeCommune: string, codeReseau?: string, 
  * Uses the YoanDev strategy: communes_udi -> code_reseau -> resultats_dis
  */
 export const fetchWaterQuality = async (cityCode: string): Promise<WaterQualityResult | null> => {
-    console.log(`[PureFlow] === Starting water quality fetch for commune ${cityCode} ===`);
+    if (DEBUG) console.log(`[PureFlow] === Starting water quality fetch for commune ${cityCode} ===`);
 
     try {
         // Step 1: Get networks
@@ -185,16 +192,16 @@ export const fetchWaterQuality = async (cityCode: string): Promise<WaterQualityR
         if (networks.length > 0) {
             // Use the first network's code_reseau for precise query
             selectedNetwork = networks[0];
-            console.log(`[PureFlow] Using network: ${selectedNetwork.nom_reseau} (${selectedNetwork.code_reseau})`);
+            if (DEBUG) console.log(`[PureFlow] Using network: ${selectedNetwork.nom_reseau} (${selectedNetwork.code_reseau})`);
             results = await getWaterResults(cityCode, selectedNetwork.code_reseau);
         } else {
             // Fallback: no networks found, try direct commune query
-            console.log(`[PureFlow] No networks found, trying direct commune query...`);
+            if (DEBUG) console.log(`[PureFlow] No networks found, trying direct commune query...`);
             results = await getWaterResults(cityCode);
         }
 
         if (!results || results.length === 0) {
-            console.warn(`[PureFlow] No results found for commune ${cityCode}`);
+            if (DEBUG) console.warn(`[PureFlow] No results found for commune ${cityCode}`);
             return null;
         }
 
@@ -205,11 +212,11 @@ export const fetchWaterQuality = async (cityCode: string): Promise<WaterQualityR
 
         // Get the latest sample date
         const latestDate = results[0].date_prelevement;
-        console.log(`[PureFlow] Latest sample date: ${latestDate}`);
+        if (DEBUG) console.log(`[PureFlow] Latest sample date: ${latestDate}`);
 
         // Filter results to only include the latest sample
         const latestResults = results.filter(r => r.date_prelevement === latestDate);
-        console.log(`[PureFlow] Found ${latestResults.length} parameters from latest sample`);
+        if (DEBUG) console.log(`[PureFlow] Found ${latestResults.length} parameters from latest sample`);
 
         // Build history for important parameters (limit to last 10 samples)
         // Important codes: 1340 (Nitrates), 1302 (pH), 1310 (Chlorine), etc.
@@ -254,7 +261,7 @@ export const fetchWaterQuality = async (cityCode: string): Promise<WaterQualityR
         };
 
     } catch (error) {
-        console.error('[PureFlow] Error in fetchWaterQuality:', error);
+        if (DEBUG) console.error('[PureFlow] Error in fetchWaterQuality:', error);
         return null;
     }
 };

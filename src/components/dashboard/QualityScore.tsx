@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { CheckCircle, AlertTriangle, ShieldCheck, FlaskConical } from "lucide-react";
+import { memo, useMemo } from "react";
 
 interface QualityScoreProps {
     conclusion: string;
@@ -8,15 +9,18 @@ interface QualityScoreProps {
     date?: string;
 }
 
-export function QualityScore({ conclusion = "Non disponible", bacterio = "Non disponible", chimique = "Non disponible", date }: QualityScoreProps) {
-    const isConforme = conclusion?.toLowerCase().includes("conforme") && !conclusion?.toLowerCase().includes("non conforme");
-    const isBacterioOk = bacterio?.toLowerCase().includes("conforme") && !bacterio?.toLowerCase().includes("non");
-    const isChimiqueOk = chimique?.toLowerCase().includes("conforme") && !chimique?.toLowerCase().includes("non");
+function QualityScoreComponent({ conclusion = "Non disponible", bacterio = "Non disponible", chimique = "Non disponible", date }: QualityScoreProps) {
+    const { isConforme, isBacterioOk, isChimiqueOk, Icon, gradientClass } = useMemo(() => {
+        const conforme = conclusion?.toLowerCase().includes("conforme") && !conclusion?.toLowerCase().includes("non conforme");
+        const bacterioOk = bacterio?.toLowerCase().includes("conforme") && !bacterio?.toLowerCase().includes("non");
+        const chimiqueOk = chimique?.toLowerCase().includes("conforme") && !chimique?.toLowerCase().includes("non");
+        const icon = conforme ? CheckCircle : AlertTriangle;
+        const gradient = conforme
+            ? "from-emerald-500 to-teal-600"
+            : "from-red-500 to-orange-600";
 
-    const Icon = isConforme ? CheckCircle : AlertTriangle;
-    const gradientClass = isConforme
-        ? "from-emerald-500 to-teal-600"
-        : "from-red-500 to-orange-600";
+        return { isConforme: conforme, isBacterioOk: bacterioOk, isChimiqueOk: chimiqueOk, Icon: icon, gradientClass: gradient };
+    }, [conclusion, bacterio, chimique]);
 
     return (
         <div className={cn("w-full p-6 sm:p-8 rounded-2xl shadow-lg text-white bg-gradient-to-r", gradientClass)}>
@@ -57,4 +61,5 @@ export function QualityScore({ conclusion = "Non disponible", bacterio = "Non di
     );
 }
 
+export const QualityScore = memo(QualityScoreComponent);
 

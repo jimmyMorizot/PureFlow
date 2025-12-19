@@ -14,6 +14,7 @@ interface AnalysisResult {
 interface AnalysisTableProps {
     results: AnalysisResult[];
     datePrelevement: string;
+    printing?: boolean;
 }
 
 type SortKey = "name" | "value";
@@ -21,7 +22,7 @@ type SortOrder = "asc" | "desc";
 
 const ITEMS_PER_PAGE = 10;
 
-export function AnalysisTable({ results, datePrelevement }: AnalysisTableProps) {
+export function AnalysisTable({ results, datePrelevement, printing = false }: AnalysisTableProps) {
     const [searchQuery, setSearchQuery] = useState("");
     const [sortKey, setSortKey] = useState<SortKey>("name");
     const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
@@ -46,8 +47,8 @@ export function AnalysisTable({ results, datePrelevement }: AnalysisTableProps) 
         return filtered;
     }, [results, searchQuery, sortKey, sortOrder]);
 
-    const displayedResults = filteredAndSorted.slice(0, displayCount);
-    const hasMore = displayCount < filteredAndSorted.length;
+    const displayedResults = printing ? filteredAndSorted : filteredAndSorted.slice(0, displayCount);
+    const hasMore = !printing && displayCount < filteredAndSorted.length;
 
     const loadMore = useCallback(() => {
         setIsLoading(true);

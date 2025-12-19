@@ -24,8 +24,21 @@ export function Dashboard({ cityCode, cityName, onCompareClick }: DashboardProps
     const [data, setData] = useState<WaterQualityResult | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isPrinting, setIsPrinting] = useState(false);
     const { alerts } = useAlertStore();
-    // const { addCity } = useComparisonStore(); // Removed unused import
+
+    // Export function with state management
+    const handleExport = async () => {
+        setIsPrinting(true);
+        // Wait for React to re-render with all rows
+        setTimeout(async () => {
+            try {
+                await exportToPDF("dashboard-content", `pureflow-${cityName}`);
+            } finally {
+                setIsPrinting(false);
+            }
+        }, 500);
+    };
 
     // Check for alerts
     const activeAlerts = data ? alerts.filter(alert => {
@@ -91,7 +104,7 @@ export function Dashboard({ cityCode, cityName, onCompareClick }: DashboardProps
     const allResults = data.resultats_analyse;
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700" id="dashboard-content">
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700 pb-12" id="dashboard-content">
             {activeAlerts.length > 0 && (
                 <Alert variant="destructive" className="animate-pulse border-red-500 bg-red-50">
                     <AlertCircle className="h-4 w-4" />
@@ -107,7 +120,7 @@ export function Dashboard({ cityCode, cityName, onCompareClick }: DashboardProps
             )}
 
             {/* Header Section */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 px-2">
                 <div>
                     <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">{cityName}</h2>
                     <p className="text-muted-foreground mt-1 text-sm">
@@ -115,38 +128,43 @@ export function Dashboard({ cityCode, cityName, onCompareClick }: DashboardProps
                         {data.network && <span className="ml-2">· Réseau: {data.network.nom_reseau}</span>}
                     </p>
                 </div>
-                <div className="flex gap-2 flex-wrap">
-                    <AlertSettings />
-                    <Button
-                        variant="default"
-                        size="sm"
-                        onClick={onCompareClick}
-                        className="gap-2 shadow-sm"
-                    >
-                        <PlusCircle className="h-4 w-4" />
-                        Comparateur
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        title="Exporter en PDF"
-                        onClick={() => exportToPDF("dashboard-content", `pureflow-${cityName}`)}
-                    >
-                        <FileDown className="h-4 w-4" />
-                    </Button>
-                </div>
+                {!isPrinting && (
+                    <div className="flex gap-2 flex-wrap">
+                        <AlertSettings />
+                        <Button
+                            variant="default"
+                            size="sm"
+                            onClick={onCompareClick}
+                            className="gap-2 shadow-sm"
+                        >
+                            <PlusCircle className="h-4 w-4" />
+                            Comparateur
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            title="Exporter en PDF"
+                            onClick={handleExport}
+                            disabled={isPrinting}
+                        >
+                            {isPrinting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
+                        </Button>
+                    </div>
+                )}
             </div>
 
             {/* Full-Width Quality Banner */}
-            <QualityScore
-                conclusion={data.conclusion_conformite_prelevement}
-                bacterio={data.conformite_limites_bacterio_prelevement}
-                chimique={data.conformite_limites_p_c_prelevement}
-                date={new Date(data.date_prelevement).toLocaleDateString("fr-FR", { year: 'numeric', month: 'long', day: 'numeric' })}
-            />
+            <div id="pdf-section-1">
+                <QualityScore
+                    conclusion={data.conclusion_conformite_prelevement}
+                    bacterio={data.conformite_limites_bacterio_prelevement}
+                    chimique={data.conformite_limites_p_c_prelevement}
+                    date={new Date(data.date_prelevement).toLocaleDateString("fr-FR", { year: 'numeric', month: 'long', day: 'numeric' })}
+                />
+            </div>
 
             {/* Key Parameters - Horizontal Row */}
-            <section>
+            <section id="pdf-section-2">
                 <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                     {nitrate && (
                         <ParameterCard
@@ -185,7 +203,7 @@ export function Dashboard({ cityCode, cityName, onCompareClick }: DashboardProps
 
             {/* Historical Charts */}
             {data.history && (
-                <section>
+                <section id="pdf-section-3">
                     <h3 className="text-xl font-bold mb-4 text-foreground">Évolution temporelle</h3>
                     <Tabs defaultValue="nitrates" className="w-full">
                         <TabsList className="mb-4">
@@ -229,10 +247,13 @@ export function Dashboard({ cityCode, cityName, onCompareClick }: DashboardProps
             )}
 
             {/* Detail des Analyses Section */}
-            <AnalysisTable
-                results={allResults}
-                datePrelevement={data.date_prelevement}
-            />
+            <div id="pdf-section-4">
+                <AnalysisTable
+                    results={allResults}
+                    datePrelevement={data.date_prelevement}
+                    printing={isPrinting}
+                />
+            </div>
         </div>
     );
 }

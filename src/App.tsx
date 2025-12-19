@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { SearchBar } from '@/components/search/SearchBar'
 
 import { Dashboard } from '@/components/dashboard/Dashboard'
@@ -16,9 +16,11 @@ function App() {
   const searchRef = useRef<HTMLDivElement>(null);
 
   // Auto-switch back to dashboard if comparison is cleared
-  if (showComparison && selectedCities.length === 0 && selectedCity) {
-    setShowComparison(false);
-  }
+  useEffect(() => {
+    if (showComparison && selectedCities.length === 0 && selectedCity) {
+      setShowComparison(false);
+    }
+  }, [showComparison, selectedCities.length, selectedCity]);
 
   const handleCitySelect = (code: string, name: string) => {
     if (isWaitingForComparison) {

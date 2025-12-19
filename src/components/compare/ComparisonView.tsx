@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, memo } from "react";
 import { useComparisonStore } from "@/stores/useComparisonStore";
 import { fetchWaterQuality, type WaterQualityResult } from "@/services/waterQuality";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Loader2, X, Trophy, AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
-export function ComparisonView() {
+function ComparisonViewComponent() {
     const { selectedCities, removeCity } = useComparisonStore();
     const [cityData, setCityData] = useState<Record<string, WaterQualityResult>>({});
     const [isLoading, setIsLoading] = useState(false);
@@ -187,3 +187,4 @@ export function ComparisonView() {
     );
 }
 
+export const ComparisonView = memo(ComparisonViewComponent);
