@@ -63,12 +63,12 @@ function App() {
           <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-emerald-200/20 rounded-full blur-[80px] animate-pulse delay-1000" />
 
           {/* Top Pill - Glass White */}
-          <div className="absolute top-8 left-1/2 -translate-x-1/2 bg-white/80 backdrop-blur-md border border-white/40 shadow-sm px-6 py-2 rounded-full flex items-center gap-2 animate-in fade-in slide-in-from-top-4 duration-1000 z-20 hover:shadow-md transition-all cursor-help group">
+          <div className="absolute top-2 sm:top-8 left-1/2 -translate-x-1/2 bg-white/80 backdrop-blur-md border border-white/40 shadow-sm px-3 sm:px-6 py-1.5 sm:py-2 rounded-full flex items-center gap-2 animate-in fade-in slide-in-from-top-4 duration-1000 z-50 hover:shadow-md transition-all cursor-help group">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
             </span>
-            <span className="text-xs font-semibold text-slate-600 group-hover:text-slate-900 transition-colors tracking-wide uppercase">Données Officielles Hub'Eau</span>
+            <span className="text-[10px] sm:text-xs font-semibold text-slate-600 group-hover:text-slate-900 transition-colors tracking-wide uppercase whitespace-nowrap">Données Officielles Hub'Eau</span>
           </div>
 
           {/* Waves Animation - Soft Blue/Teal */}
